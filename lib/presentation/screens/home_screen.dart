@@ -1,6 +1,13 @@
 import 'package:exercici_disseny_responsiu_stateful/presentation/widgets/my_container_widget.dart';
 import 'package:exercici_disseny_responsiu_stateful/presentation/widgets/my_list_widget.dart';
 import 'package:flutter/material.dart';
+import '../../domain/entities/Video.dart';
+import '../../domain/usecase/GetVideoUseCase.dart';
+import '../../infrastructure/repository/videos_repository_impl.dart';
+import '../../infrastructure/data_sources/videos_api.dart';
+
+
+
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
@@ -9,149 +16,107 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+
+
 class _HomeScreenState extends State<HomeScreen> {
-  // Exemple amb OrientationBuilder
-  final List<Map<String, dynamic>> llistaItems = [
-    {
-      "titol": "Star Wars. Episode IV. A new Hope",
-      "director": "George Lucas",
-      "year": 1977,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/8/87/StarWarsMoviePoster1977.jpg",
-    },
-    {
-      "titol": "Star Wars. Episode V. Empire Strikes Back",
-      "director": "Irvin Kershner",
-      "year": 1981,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/3/3f/The_Empire_Strikes_Back_%281980_film%29.jpg",
-    },
-    {
-      "titol": "Star Wars. Episode VI. Return of the Jedi",
-      "director": "Richard Marquand",
-      "year": 1984,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/b/b2/ReturnOfTheJediPoster1983.jpg",
-    },
-    {
-      "titol": "Star Wars. Episode I, The Phantom Menace",
-      "director": "George Lucas",
-      "year": 1999,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/4/40/Star_Wars_Phantom_Menace_poster.jpg",
-    },
-    {
-      "titol": "Star Wars. Episode II. The Clone Attack.",
-      "director": "George Lucas",
-      "year": 2002,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/3/32/Star_Wars_-_Episode_II_Attack_of_the_Clones_%28movie_poster%29.jpg",
-    },
-    {
-      "titol": "Star Wars. Episode III. The Revenge of the Sith",
-      "director": "George Lucas",
-      "year": 2005,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/9/93/Star_Wars_Episode_III_Revenge_of_the_Sith_poster.jpg",
-    },
-    {
-      "titol": "Star Wars. Episode VII. The Force Awakens",
-      "director": "JJ Abrams",
-      "year": 2015,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/a/a2/Star_Wars_The_Force_Awakens_Theatrical_Poster.jpg",
-    },
-    {
-      "titol": "Star Wars. Episode VIII. The Last Jedi",
-      "director": "Rian Johnson",
-      "year": 2017,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/7/7f/Star_Wars_The_Last_Jedi.jpg",
-    },
-    {
-      "titol": "Star Wars. Episode IX. The Rise of Skywalker",
-      "director": "JJ Abrams",
-      "year": 2019,
-      "cover":
-          "https://upload.wikimedia.org/wikipedia/en/a/af/Star_Wars_The_Rise_of_Skywalker_poster.jpg",
-    },
-  ];
+  late GetVideosUseCase _getVideosUseCase;
+  List<Video> _videos = [];
+  bool _isLoading = true;
+  Map<String, dynamic>? _selectedFilm;
 
-  Map<String, dynamic>? currentFilm;
+  @override
+  void initState() {
+    super.initState();
+    
+    //Cadema completa(API -> Repo -> UseCase)
+    //VideosApi sabe cómo pedir los datos del backend.
+    //VideoRepositoryImpl usa esa API para obtener vídeos.
+    //GetVideosUseCase se apoya en el repositorio.
+    final api = VideosApi('http://127.0.0.1:8080/api/videolist/');
+    final repo = VideoRepositoryImpl(api);
+    _getVideosUseCase = GetVideosUseCase(repo);
 
-  _setFilm(Map<String, dynamic>? film) {
-    setState(() {
-      currentFilm = film;
+    _loadVideos();
+
+  }
+  
+  Future<void> _loadVideos() async {
+    final videos = await _getVideosUseCase();
+    setState((){
+      _videos = videos;
+      _isLoading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Aquesta pantalla conté un scaffold amb la barra d'aplicacions i un cos
+
+    if(_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    // Convert domain Video objects to simple maps expected by the existing widgets
+    final items = _videos
+        .map((v) => {
+              'id': v.id,
+              'topic': v.topic ?? '',
+              'description': v.description ?? '',
+              'duration': v.duration?.toString() ?? '',
+              // MyContainerWidget expects a 'cover' key for the image
+              'cover': "assets/images/thumbnails/${v.thumbnail}",
+            })
+        .toList();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('OrientationBuilder Example')),
-      // El body és un SafeArea: Widget que evita la interfície del sistema
-      body: SafeArea(
-        // Reacciona explícitament a canvis d’orientació del pare
-        // Rebem orientation en el builder
-        child: OrientationBuilder(
-          builder: (context, orientation) {
-            // isLandscape rep el valor de la comparació orientation==Orientation.landscape
-            final isLandscape = orientation == Orientation.landscape;
-            // Segons aquest, retornem un o altre arbre de widgets (ui declarativa)
-            return isLandscape
-                ? _sideBySideLayout(context, _setFilm)
-                : _stackedLayout(context, _setFilm);
-          },
-        ),
-      ),
-    );
-  }
+      appBar: AppBar(title: const Text('Películas')),
+      body: LayoutBuilder(builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 720; // breakpoint
 
-  /* ============================
-    Helpers de composició layout
-    Els introduim com a mètodes del propi estat, per accedir a la informació necessària
-   ============================ 
-   */
+        // Detail panel (may be null)
+        final detail = Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: MyContainerWidget(film: _selectedFilm),
+        );
 
-  /// Disposició *top–bottom* (portrait): contenidor dalt, llista baix.
-  ///
-  Widget _stackedLayout(
-    BuildContext context,
-    Function(Map<String, dynamic>?) callback,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        children: [
-          // El contenidor ocupa alçada intrínseca; la llista s’expandeix
-          MyContainerWidget(film: currentFilm),
-          const SizedBox(height: 12),
-          Expanded(
-            child: MyListWidget(items: llistaItems, callback: _setFilm),
+        // List panel
+        final list = Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: MyListWidget(
+            items: items,
+            callback: (item) {
+              setState(() {
+                _selectedFilm = Map<String, dynamic>.from(item);
+              });
+            },
           ),
-        ],
-      ),
-    );
-  }
+        );
 
-  /// Disposició *side‑by‑side* (landscape): contenidor esquerra, llista dreta.
-  Widget _sideBySideLayout(
-    BuildContext context,
-    Function(Map<String, dynamic>?) callback,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          Flexible(flex: 2, child: MyContainerWidget(film: currentFilm)),
-          const SizedBox(width: 12),
-          Flexible(
-            flex: 3,
-            child: MyListWidget(items: llistaItems, callback: _setFilm),
-          ),
-        ],
-      ),
+        if (isWide) {
+          // Side-by-side on wide screens: detail on the left, list on the right
+          return Row(
+            children: [
+              Flexible(flex: 2, child: detail),
+              const VerticalDivider(width: 1),
+              Flexible(flex: 3, child: list),
+            ],
+          );
+        }
+
+        // Narrow screens: detail above, list below. Keep list scrollable.
+        return Column(
+          children: [
+            // Make the detail area take a proportional height but not exceed a sensible max
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.45,
+              ),
+              child: SizedBox(width: double.infinity, child: detail),
+            ),
+            Expanded(child: list),
+          ],
+        );
+      }),
     );
   }
 }
+
+

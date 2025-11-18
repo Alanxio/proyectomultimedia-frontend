@@ -1,9 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
-class MyContainerWidget extends StatelessWidget {
+class MyContainerWidget extends StatefulWidget {
+  final dynamic film;
+
   const MyContainerWidget({super.key, this.film});
 
-  final Map<String, dynamic>? film;
+  @override
+  State<MyContainerWidget> createState() => _MyContainerWidgetScreenState();
+  
+}
+
+
+
+class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
+  late VideoPlayerController _controller;
+  late final Map<String, dynamic>? film;
+  bool isPlaying = false;
+  bool isImageDisplayed = true;
+
+ @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(
+        Uri.parse(
+          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+        ),
+      )
+      ..initialize().then((_) {
+        // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
+        setState(() {});
+      });
+  }
+
+  
+  
+  formattedTime({required String timeInSecondS}) {
+    int timeInSecond = int.parse(timeInSecondS);
+    int sec = timeInSecond % 60;
+    int min = (timeInSecond / 60).floor();
+    String minute = min.toString().length <= 1 ? "0$min" : "$min";
+    String second = sec.toString().length <= 1 ? "0$sec" : "$sec";
+    return "$minute : $second";
+  }
+
+
+  @override
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +64,22 @@ class MyContainerWidget extends StatelessWidget {
                 children: [
                   // 🔹 Portada a dalt (ample complet). Canvia l’aspect ratio al teu gust.
                   // 16/9 sol quedar bé per a “banner”; si vols look de pòster usa 2/3 i afegeix un límit d’alçada.
-                  _CoverFullWidth(cover: (film!['cover'] as String?)?.trim()),
+                  isImageDisplayed ? _CoverFullWidth(cover: (film!['cover'] as String?)?.trim()) :  _controller.value.isInitialized
+                  ? AspectRatio(aspectRatio: _controller.value.aspectRatio,
+                  child: VideoPlayer(_controller),
+                  )
+                  : Container(),
+            
+            FloatingActionButton(onPressed: () {
+              setState(() {
+                _controller.value.isPlaying ?
+                _controller.pause() :
+                _controller.play();
+              });
+            }, child: Icon(
+            _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+            ),
+            ),
 
                   // 🔹 Textos i accions, amb padding intern
                   Padding(
@@ -33,14 +90,14 @@ class MyContainerWidget extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          (film!['titol'] ?? '—').toString(),
+                          (film!['id'] ?? '—').toString(),
                           style: Theme.of(context).textTheme.headlineSmall,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${film!['director'] ?? '—'} · ${film!['year'] ?? ''}',
+                          '${film!['topic'] ?? '—'} · ${formattedTime(timeInSecondS: film!['duration'])}',
                         ),
                         // Aquí podries afegir botons (Acció / Neteja) si vols
                       ],
@@ -52,6 +109,8 @@ class MyContainerWidget extends StatelessWidget {
     );
   }
 }
+  
+
 
 class _CoverFullWidth extends StatelessWidget {
   const _CoverFullWidth({required this.cover});
@@ -96,5 +155,7 @@ class _CoverFullWidth extends StatelessWidget {
     //     child: AspectRatio(aspectRatio: 2/3, child: child),
     //   ),
     // );
-  }
+    }
 }
+
+
