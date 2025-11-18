@@ -58,11 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final items = _videos
         .map((v) => {
               'id': v.id,
+              'title': v.title ?? '',
               'topic': v.topic ?? '',
               'description': v.description ?? '',
               'duration': v.duration?.toString() ?? '',
               // MyContainerWidget expects a 'cover' key for the image
-              'cover': "assets/images/thumbnails/${v.thumbnail}",
+              'cover': v.thumbnail,
             })
         .toList();
 

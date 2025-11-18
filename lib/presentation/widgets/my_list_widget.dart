@@ -6,10 +6,6 @@ class MyListWidget extends StatelessWidget {
   final List items;
   final Function callback;
 
-  // Source - https://stackoverflow.com/a
-  // Posted by Akash Lilhare, modified by community. See post 'Timeline' for change history
-  // Retrieved 2025-11-11, License - CC BY-SA 4.0
-
   formattedTime({required String timeInSecondS}) {
     int timeInSecond = int.parse(timeInSecondS);
     int sec = timeInSecond % 60;
@@ -31,8 +27,8 @@ class MyListWidget extends StatelessWidget {
         separatorBuilder: (_, __) => const Divider(height: 1),
         itemBuilder: (context, index) {
           return ListTile(
-            leading: Image.asset(items[index]["cover"]),
-            title: Text(items[index]["id"]),
+            leading: Image.network(items[index]["cover"]),
+            title: Text(items[index]["title"]),
             subtitle: Text(
                           '${items[index]['topic']} · ${formattedTime(timeInSecondS: items[index]['duration'])}',
                         ),

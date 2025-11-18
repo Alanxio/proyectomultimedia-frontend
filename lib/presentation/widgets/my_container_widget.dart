@@ -15,7 +15,7 @@ class MyContainerWidget extends StatefulWidget {
 
 class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
   late VideoPlayerController _controller;
-  late final Map<String, dynamic>? film;
+  Map<String, dynamic>? film;
   bool isPlaying = false;
   bool isImageDisplayed = true;
 
@@ -24,12 +24,12 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
     super.initState();
     _controller = VideoPlayerController.networkUrl(
         Uri.parse(
-          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+          film?['id'],
         ),
       )
       ..initialize().then((_) {
         // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
-        setState(() {});
+        
       });
   }
 
@@ -90,7 +90,7 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          (film!['id'] ?? '—').toString(),
+                          (film!['title'] ?? '—').toString(),
                           style: Theme.of(context).textTheme.headlineSmall,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
