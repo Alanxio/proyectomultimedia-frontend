@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+
 class MyContainerWidget extends StatefulWidget {
   final dynamic film;
 
@@ -8,44 +9,64 @@ class MyContainerWidget extends StatefulWidget {
 
   @override
   State<MyContainerWidget> createState() => _MyContainerWidgetScreenState();
-  
 }
-
-
 
 class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
   late VideoPlayerController _controller;
   Map<String, dynamic>? film;
+  static const url = 'http://localhost:8080';
   bool isPlaying = false;
-  bool isImageDisplayed = true;
+  bool isImageDisplayed = false;
 
- @override
+  @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(
-        Uri.parse(
-          film?['id'],
-        ),
-      )
+
+    film = widget.film;
+
+    if (film == null || film!['id'] == null) return;
+
+    final urlfilm = film!['id'];
+
+    final urlTotal = url + urlfilm;
+
+    _controller = VideoPlayerController.networkUrl(Uri.parse(urlTotal))
       ..initialize().then((_) {
-        // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
-        
+        setState(() {});
       });
   }
 
-  
-  
+  @override
+  void didUpdateWidget(covariant MyContainerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.film != oldWidget.film) {
+      setState(() {
+        film = widget.film;
+      });
+
+      final urlfilm = film!['id'];
+
+      final urlTotal = url + urlfilm;
+
+      // Reiniciar el vídeo
+      if (film != null && film!['id'] != null) {
+        _controller = VideoPlayerController.networkUrl(Uri.parse(urlTotal))
+          ..initialize().then((_) {
+            setState(() {});
+          });
+      }
+    }
+  }
+
   formattedTime({required String timeInSecondS}) {
-    int timeInSecond = int.parse(timeInSecondS);
-    int sec = timeInSecond % 60;
+    double timeInSecond = double.parse(timeInSecondS);
+    int sec = (timeInSecond % 60).floor();
     int min = (timeInSecond / 60).floor();
     String minute = min.toString().length <= 1 ? "0$min" : "$min";
     String second = sec.toString().length <= 1 ? "0$sec" : "$sec";
     return "$minute : $second";
   }
-
-
-  @override
 
   @override
   Widget build(BuildContext context) {
@@ -64,22 +85,31 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
                 children: [
                   // 🔹 Portada a dalt (ample complet). Canvia l’aspect ratio al teu gust.
                   // 16/9 sol quedar bé per a “banner”; si vols look de pòster usa 2/3 i afegeix un límit d’alçada.
-                  isImageDisplayed ? _CoverFullWidth(cover: (film!['cover'] as String?)?.trim()) :  _controller.value.isInitialized
-                  ? AspectRatio(aspectRatio: _controller.value.aspectRatio,
-                  child: VideoPlayer(_controller),
-                  )
-                  : Container(),
-            
-            FloatingActionButton(onPressed: () {
-              setState(() {
-                _controller.value.isPlaying ?
-                _controller.pause() :
-                _controller.play();
-              });
-            }, child: Icon(
-            _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-            ),
-            ),
+                  isImageDisplayed
+                      ? _CoverFullWidth(
+                          cover: (film!['cover'] as String?)?.trim(),
+                        )
+                      : _controller.value.isInitialized
+                      ? AspectRatio(
+                          aspectRatio: _controller.value.aspectRatio,
+                          child: VideoPlayer(_controller),
+                        )
+                      : Container(),
+
+                  FloatingActionButton(
+                    onPressed: () {
+                      setState(() {
+                        _controller.value.isPlaying
+                            ? _controller.pause()
+                            : _controller.play();
+                      });
+                    },
+                    child: Icon(
+                      _controller.value.isPlaying
+                          ? Icons.pause
+                          : Icons.play_arrow,
+                    ),
+                  ),
 
                   // 🔹 Textos i accions, amb padding intern
                   Padding(
@@ -109,8 +139,6 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
     );
   }
 }
-  
-
 
 class _CoverFullWidth extends StatelessWidget {
   const _CoverFullWidth({required this.cover});
@@ -155,7 +183,5 @@ class _CoverFullWidth extends StatelessWidget {
     //     child: AspectRatio(aspectRatio: 2/3, child: child),
     //   ),
     // );
-    }
+  }
 }
-
-
