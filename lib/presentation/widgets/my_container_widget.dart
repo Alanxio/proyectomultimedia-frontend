@@ -116,6 +116,36 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
                             ),
                           ),
                         ),
+                        // Barra de progreso pegada abajo
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: ValueListenableBuilder(
+                            valueListenable: _controller,
+                            builder: (context, VideoPlayerValue value, _) {
+                              final position = value.position.inMilliseconds
+                                  .toDouble();
+                              final duration = value.duration.inMilliseconds
+                                  .toDouble();
+
+                              if (duration <= 0) return SizedBox.shrink();
+
+                              return Slider(
+                                min: 0,
+                                max: duration,
+                                value: position.clamp(0, duration),
+                                onChanged: (newValue) {
+                                  _controller.seekTo(
+                                    Duration(milliseconds: newValue.toInt()),
+                                  );
+                                },
+                                activeColor: Colors.red,
+                                inactiveColor: Colors.white38,
+                              );
+                            },
+                          ),
+                        ),
                       ],
                     ),
                   )
