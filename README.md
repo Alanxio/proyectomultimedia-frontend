@@ -45,28 +45,3 @@ assets/
 test/
 ```
 
-## Testing
-- Unit: mocks de DataSources con mockito/mocktail.
-- Widget: WidgetTester.
-- CI: flutter analyze, flutter test en cada PR.
-
-## Scrum
-- **DoD**: compilable, tests pasan, lint, reviews, docs.
-- **Branching**: feature/<id>, PR linkado a issue, checks verdes antes de merge.
-- **Sprint**: 1-2 semanas, dailies, review, retro.
-- **Velocidad**: medir para planificar.
-
-## Deploy
-- Play Store / App Store con signingConfig.
-- Tag semántico: vX.Y.Z.
-- CI automático desde release/main.
-
-## Observabilidad
-- Logs estructurados (network, auth, parsing).
-- Sentry/Crashlytics para crashes.
-- Telemetría: uploads, downloads, syncs.
-
-## Notas
-- Mantener mappers simples y testables.
-- DTOs documentados.
-- Non-nullable types, codegen.
