@@ -15,7 +15,7 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
   Map<String, dynamic>? film;
   static const url = 'http://localhost:8080';
   bool isPlaying = false;
-  bool isImageDisplayed = false;
+  bool isFullscreen = false;
 
   @override
   void initState() {
@@ -67,6 +67,18 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
     return "$minute : $second";
   }
 
+  void _openFullscreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => _FullscreenVideo(
+          controller: _controller,
+          film: film,
+          formattedTime: formattedTime,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (film == null) {
@@ -86,7 +98,7 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
                     aspectRatio: _controller.value.aspectRatio,
                     child: Stack(
                       fit: StackFit
-                          .expand, //IMPORTANTE, ocupa TODO el tamaño del vídeo
+                          .expand, //IMPORTANTE, ocupa todo el tamaño del vídeo
                       children: [
                         VideoPlayer(_controller),
 
@@ -112,6 +124,26 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
                                     : Icons.play_arrow,
                                 size: 45,
                                 color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Botón fullscreen en la esquina superior derecha
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: _openFullscreen,
+                            child: Container(
+                              padding: EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.fullscreen,
+                                color: Colors.white,
+                                size: 24,
                               ),
                             ),
                           ),
@@ -171,6 +203,155 @@ class _MyContainerWidgetScreenState extends State<MyContainerWidget> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FullscreenVideo extends StatefulWidget {
+  final VideoPlayerController controller;
+  final Map<String, dynamic>? film;
+  final Function formattedTime;
+
+  const _FullscreenVideo({
+    required this.controller,
+    required this.film,
+    required this.formattedTime,
+  });
+
+  @override
+  State<_FullscreenVideo> createState() => _FullscreenVideoState();
+}
+
+class _FullscreenVideoState extends State<_FullscreenVideo> {
+  late VideoPlayerController _controller;
+  bool _showControls = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controller;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: () {
+          setState(() {
+            _showControls = !_showControls;
+          });
+        },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Center(
+              child: _controller.value.isInitialized
+                  ? AspectRatio(
+                      aspectRatio: _controller.value.aspectRatio,
+                      child: VideoPlayer(_controller),
+                    )
+                  : const Center(child: CircularProgressIndicator()),
+            ),
+            if (_showControls) ...[
+              // Botón atrás en la esquina superior izquierda
+              Positioned(
+                top: 16,
+                left: 16,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+              // Centro: Play/Pause
+              Center(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _controller.value.isPlaying
+                          ? _controller.pause()
+                          : _controller.play();
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _controller.value.isPlaying
+                          ? Icons.pause
+                          : Icons.play_arrow,
+                      size: 56,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              // Barra de progreso abajo
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: ValueListenableBuilder(
+                  valueListenable: _controller,
+                  builder: (context, VideoPlayerValue value, _) {
+                    final position = value.position.inMilliseconds.toDouble();
+                    final duration = value.duration.inMilliseconds.toDouble();
+
+                    if (duration <= 0) return SizedBox.shrink();
+
+                    return Column(
+                      children: [
+                        Slider(
+                          min: 0,
+                          max: duration,
+                          value: position.clamp(0, duration),
+                          onChanged: (newValue) {
+                            _controller.seekTo(
+                              Duration(milliseconds: newValue.toInt()),
+                            );
+                          },
+                          activeColor: Colors.red,
+                          inactiveColor: Colors.white38,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${value.position.inMinutes}:${(value.position.inSeconds % 60).toString().padLeft(2, '0')}',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              Text(
+                                '${value.duration.inMinutes}:${(value.duration.inSeconds % 60).toString().padLeft(2, '0')}',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ]
+          ],
+        ),
       ),
     );
   }

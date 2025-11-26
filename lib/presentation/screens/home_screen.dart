@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if(_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    // Convert domain Video objects to simple maps expected by the existing widgets
+    // Convertir objetos de dominio Video en mapas simples esperados por los widgets existentes
     final items = _videos
         .map((v) => {
               'id': v.id,
@@ -62,7 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
               'topic': v.topic ?? '',
               'description': v.description ?? '',
               'duration': v.duration?.toString() ?? '',
-              // MyContainerWidget expects a 'cover' key for the image
               'cover': v.thumbnail,
             })
         .toList();
@@ -72,13 +71,13 @@ class _HomeScreenState extends State<HomeScreen> {
       body: LayoutBuilder(builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 720; // breakpoint
 
-        // Detail panel (may be null)
+        // Panel de la pelicula ( puede ser null )
         final detail = Padding(
           padding: const EdgeInsets.all(8.0),
-          child: MyContainerWidget(film: _selectedFilm),
+          child: MyContainerWidget(film: _selectedFilm), // Constructor con _selectedFilm
         );
 
-        // List panel
+        // Panel de peliculas listadas
         final list = Padding(
           padding: const EdgeInsets.all(8.0),
           child: MyListWidget(
@@ -92,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         if (isWide) {
-          // Side-by-side on wide screens: detail on the left, list on the right
+          // Lado a lado en pantallas anchas: detalle a la izquierda, lista a la derecha
           return Row(
             children: [
               Flexible(flex: 2, child: detail),
@@ -102,10 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        // Narrow screens: detail above, list below. Keep list scrollable.
+        // Pantallas estrecha: detalle arriba, lista abajo. Lista scroleable.
         return Column(
           children: [
-            // Make the detail area take a proportional height but not exceed a sensible max
+            // Hacer los detalles proporcinalmente grande pero sin pasarse
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.45,
