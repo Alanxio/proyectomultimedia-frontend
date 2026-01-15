@@ -15,6 +15,12 @@ class MyListWidget extends StatelessWidget {
     return "$minute : $second";
   }
 
+  String resolucionFormato(String texto) {
+  return texto.split('').reversed.join('');
+}
+
+
+
   static const url = 'http://localhost:8080';
 
   
@@ -34,7 +40,7 @@ class MyListWidget extends StatelessWidget {
             leading: Image.network(url + items[index]["cover"]),
             title: Text(items[index]["title"]),
             subtitle: Text(
-                          '${items[index]['topic']} · ${formattedTime(timeInSecondS: items[index]['duration'])}',
+                          '${resolucionFormato(items[index]['resolution'])} · ${formattedTime(timeInSecondS: items[index]['duration'])}',
                         ),
             onTap: () {
               callback(items[index]);

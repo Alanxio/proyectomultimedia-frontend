@@ -1,6 +1,6 @@
+import 'package:exercici_disseny_responsiu_stateful/presentation/screens/series_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'presentation/screens/home_screen.dart';
 
 void main() {
   debugPaintSizeEnabled =
@@ -19,7 +19,8 @@ class MyApp extends StatelessWidget {
       // Definim el tema de l'aplicacicó. Fem ús de l'esquema de colors Teal
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.amberAccent),
       // Widget principal
-      home: HomeScreen(),
+      home: SeriesScreen(),
     );
   }
 }
+

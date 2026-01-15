@@ -3,15 +3,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
-class VideosApi {
+class SeriesApi {
   // Aquesta és la URL base, que es proporcionarà en el moment de la instanciació.
-  String baseURL = "http://localhost:8090/catalogo/videos";
+  String baseURL = "http://localhost:8080/api/videolist"; //TO-DO: Series catalogo
 
   // Constructor
-  VideosApi(this.baseURL);
+  SeriesApi(this.baseURL);
 
   // Obté una llista de JSON amb el resultat de l'API
-  Future<List<dynamic>> getVideos() async {
+  Future<List<dynamic>> getSeries() async {
     String url = baseURL;
 
     http.Response data = await http.get(Uri.parse(url));
